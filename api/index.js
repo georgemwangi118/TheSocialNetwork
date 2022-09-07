@@ -6,6 +6,10 @@ const dotenv = require("dotenv");
 dotenv.config();
 const helmet = require("helmet");
 const morgan = require("morgan");
+const multer = require("multer");
+const path = require("path");
+
+//routes import
 const userRoute = require("./routes/users");
 const authRoute = require("./routes/auth");
 const postRoute = require("./routes/posts");
@@ -21,10 +25,33 @@ mongoose.connect(
   }
 );
 
+//path for the images
+app.use("/images", express.static(path.join(__dirname, "public/images")));
+
 app.use(cors());
 app.use(express.json());
 app.use(helmet());
 app.use(morgan("common"));
+
+//storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "public/images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, req.body.name);
+  },
+});
+
+//upload
+const upload = multer({ storage: storage });
+app.post("/api/upload", upload.single("file"), (req, res) => {
+  try {
+    return res.status(200).json("File upload successfully");
+  } catch (err) {
+    console.log(err);
+  }
+});
 
 //routes
 app.use("/api/auth", authRoute);
